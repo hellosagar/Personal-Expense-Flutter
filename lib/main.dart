@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import './widgets/new_transcation.dart';
 import './widgets/transcation_list.dart';
-
+import './widgets/chart.dart';
 import 'models/transcation.dart';
 
 void main() {
@@ -10,7 +10,6 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -18,13 +17,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           primarySwatch: Colors.pink,
           accentColor: Colors.amber,
+          errorColor: Colors.red,
           fontFamily: 'QuickSand',
           textTheme: ThemeData.light().textTheme.copyWith(
-                  headline6: TextStyle(
-                fontFamily: 'OpenSans',
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              )),
+                headline6: TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                button: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
           appBarTheme: AppBarTheme(
               textTheme: ThemeData.light().textTheme.copyWith(
                       headline6: TextStyle(
@@ -57,16 +61,29 @@ class _MyHomePageState extends State<MyHomePage> {
     // ),
   ];
 
-  void _addNewTranscation(String txTitle, double txAmount) {
+  List<Transcation> get _recentTranscations {
+    return _userTranscations.where((tx) {
+      return tx.date.isAfter(DateTime.now().subtract(Duration(days: 7)));
+    }).toList();
+  }
+
+  void _addNewTranscation(
+      String txTitle, double txAmount, DateTime pickedDate) {
     final newTxn = Transcation(
       id: DateTime.now().toString(),
       title: txTitle,
       amount: txAmount,
-      date: DateTime.now(),
+      date: pickedDate,
     );
 
     setState(() {
       _userTranscations.add(newTxn);
+    });
+  }
+
+  void _deleteTranscation(String id) {
+    setState(() {
+      _userTranscations.removeWhere((txn) => txn.id == id);
     });
   }
 
@@ -99,15 +116,10 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              child: Card(
-                color: Colors.pink,
-                elevation: 4.0,
-                child: Text("CHART!"),
-              ),
+            Chart(
+              recentTxns: _recentTranscations,
             ),
-            TranscationList(_userTranscations),
+            TranscationList(_userTranscations, _deleteTranscation),
           ],
         ),
       ),

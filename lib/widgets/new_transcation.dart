@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NewTranscation extends StatefulWidget {
   final Function addUserTranscation;
@@ -10,21 +11,39 @@ class NewTranscation extends StatefulWidget {
 }
 
 class _NewTranscationState extends State<NewTranscation> {
-  final titleController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  DateTime _selectedDate;
 
-  final amountController = TextEditingController();
+  void _submitData() {
+    final title = _titleController.text;
+    final amount = double.parse(_amountController.text);
 
-  void submitData() {
-    final title = titleController.text;
-    final amount = double.parse(amountController.text);
-
-    if (title.isEmpty || amount <= 0) {
+    if (title.isEmpty || amount <= 0 || _selectedDate == null) {
       return;
     }
 
-    widget.addUserTranscation(title, amount);
+    widget.addUserTranscation(title, amount, _selectedDate);
 
     Navigator.of(context).pop();
+  }
+
+  void _presentDatePicker(BuildContext context) {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    ).then(
+      (pickedDate) {
+        if (pickedDate == null) {
+          return;
+        }
+        setState(() {
+          _selectedDate = pickedDate;
+        });
+      },
+    );
   }
 
   @override
@@ -37,27 +56,53 @@ class _NewTranscationState extends State<NewTranscation> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
             TextField(
-              controller: titleController,
+              controller: _titleController,
               onChanged: (value) {},
               decoration: InputDecoration(labelText: 'Enter Title'),
             ),
             TextField(
-              controller: amountController,
+              controller: _amountController,
               decoration: InputDecoration(labelText: 'Enter Amount'),
               keyboardType: TextInputType.numberWithOptions(
                 decimal: true,
                 signed: true,
               ),
-              onSubmitted: (_) => submitData,
+              onSubmitted: (_) => _submitData,
+            ),
+            Container(
+              height: 70,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(_selectedDate == null
+                        ? 'Choose Date!'
+                        : 'Picked Date: ' +
+                            DateFormat.yMd().format(_selectedDate)),
+                  ),
+                  FlatButton(
+                    textColor: Theme.of(context).primaryColor,
+                    onPressed: () {
+                      _presentDatePicker(context);
+                    },
+                    child: Text(
+                      'Choose Date',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  )
+                ],
+              ),
             ),
             FlatButton(
+              color: Theme.of(context).primaryColor,
               onPressed: () {
-                submitData();
-                print('${titleController.text} ${amountController.text}');
+                _submitData();
+                print('${_titleController.text} ${_amountController.text}');
               },
               child: Text(
                 'Add Transcation',
-                style: TextStyle(color: Theme.of(context).primaryColor),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.button.color,
+                ),
               ),
             )
           ],
